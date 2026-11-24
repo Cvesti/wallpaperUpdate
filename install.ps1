@@ -183,16 +183,21 @@ foreach ($profile in $profiles) {
     $userAction = New-ScheduledTaskAction -Execute "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" `
         -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ApplyScript`""
 
+    # Получаем реальное имя учётной записи по SID (папка профиля может называться иначе, чем логин)
+    try {
+        $fullUserName = (New-Object System.Security.Principal.SecurityIdentifier($sid)).Translate([System.Security.Principal.NTAccount]).Value
+    } catch {
+        Write-Warning "Пропускаем профиль $($profile.LocalPath): не удалось определить имя учётной записи ($sid)."
+        continue
+    }
+
     $userHourly = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(3) `
         -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
     $userLogon = New-ScheduledTaskTrigger -AtLogOn -User $fullUserName
-    # Извлекаем имя пользователя из пути профиля (например, C:\Users\Иван -> Иван)
-    $userName = Split-Path $profile.LocalPath -Leaf
 
-    # Формируем полное имя локальной учетной записи
-    $fullUserName = "$env:COMPUTERNAME\$userName"
+    $userPrincipal = New-ScheduledTaskPrincipal -UserId $fullUserName -LogonType Interactive -RunLevel Limited
 
-    $userPrincipal = New-ScheduledTaskPrincipal -UserId $fullUserName -LogonType Interactive -RunLevel Limited    $userSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+    $userSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
         -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -MultipleInstances IgnoreNew
 
     Register-ScheduledTask -TaskName $taskName -Action $userAction -Trigger @($userHourly, $userLogon) `
