@@ -1,17 +1,20 @@
 @echo off
-curl -s -o C:\PRJ_Notification\wallpaper.png "https://raw.githubusercontent.com/Cvesti/wallpaperUpdate/main/wallpaper.png"
+setlocal
+set "INSTALL_DIR=C:\PRJ_Notification"
+set "PS_SCRIPT=%INSTALL_DIR%\DownloadWallpaper.ps1"
 
-for /f "tokens=*" %%a in ('dir /b /a:d "C:\Users"') do (
-    if exist "C:\Users\%%a\NTUSER.DAT" (
-        reg load "HKU\TempHive_%%a" "C:\Users\%%a\NTUSER.DAT" >nul 2>&1
-        if errorlevel 0 (
-            reg add "HKU\TempHive_%%a\Control Panel\Desktop" /v Wallpaper /t REG_SZ /d "C:\PRJ_Notification\wallpaper.png" /f >nul
-            reg add "HKU\TempHive_%%a\Control Panel\Desktop" /v WallpaperStyle /t REG_SZ /d "10" /f >nul
-            reg add "HKU\TempHive_%%a\Control Panel\Desktop" /v TileWallpaper /t REG_SZ /d "0" /f >nul
-            reg unload "HKU\TempHive_%%a" >nul 2>&1
-        )
-    )
+if not exist "%PS_SCRIPT%" (
+    echo [WLLPP] Не найден %PS_SCRIPT%.
+    echo Сначала запустите install.ps1 от имени администратора.
+    exit /b 1
 )
 
-    
-RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters
+"%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%PS_SCRIPT%"
+set "RESULT=%ERRORLEVEL%"
+
+if not "%RESULT%"=="0" (
+    echo [WLLPP] Ошибка загрузки. Код: %RESULT%
+    exit /b %RESULT%
+)
+
+exit /b 0
