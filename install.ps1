@@ -192,7 +192,7 @@ foreach ($profile in $profiles) {
     }
 
     $userHourly = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(3) `
-        -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
+        -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration (New-TimeSpan -Days 3650)
     $userLogon = New-ScheduledTaskTrigger -AtLogOn -User $fullUserName
 
     $userPrincipal = New-ScheduledTaskPrincipal -UserId $fullUserName -LogonType Interactive -RunLevel Limited
@@ -224,7 +224,7 @@ Write-Host "Папка: $InstallDir"
 Write-Host "GitHub: $RepoRaw"
 Write-Host "Проверка обновлений: каждый час и при запуске Windows."
 Write-Host "Задач применения создано для профилей: $created"
-Write-Host "Применение обоев: при входе пользователя и каждый час."
+Write-Host "Применение обоев: при входе пользователя и каждые 5 минут."
 Write-Host ""
 Write-Host "Лог загрузчика: $InstallDir\Download.log"
 Write-Host "Лог пользователя: %LOCALAPPDATA%\WLLPP_Update.log"
