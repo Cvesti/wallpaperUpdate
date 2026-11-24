@@ -185,9 +185,14 @@ foreach ($profile in $profiles) {
 
     $userHourly = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(3) `
         -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
-    $userLogon = New-ScheduledTaskTrigger -AtLogOn -User $sid
-    $userPrincipal = New-ScheduledTaskPrincipal -UserId $sid -LogonType Interactive -RunLevel Limited
-    $userSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+    $userLogon = New-ScheduledTaskTrigger -AtLogOn -User $fullUserName
+    # Извлекаем имя пользователя из пути профиля (например, C:\Users\Иван -> Иван)
+    $userName = Split-Path $profile.LocalPath -Leaf
+
+    # Формируем полное имя локальной учетной записи
+    $fullUserName = "$env:COMPUTERNAME\$userName"
+
+    $userPrincipal = New-ScheduledTaskPrincipal -UserId $fullUserName -LogonType Interactive -RunLevel Limited    $userSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
         -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -MultipleInstances IgnoreNew
 
     Register-ScheduledTask -TaskName $taskName -Action $userAction -Trigger @($userHourly, $userLogon) `
