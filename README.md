@@ -36,6 +36,17 @@
 
 При изменении самого кода скачайте свежий ZIP и повторно запустите `INSTALL.bat`: старые задачи WLLPP будут заменены. Скрипты не обновляются автоматически с GitHub.
 
+Форкни мою репу, и в `DownloadWallpaper.ps1` замени $url = 'https://raw.githubusercontent.com/USERNAME/wallpaperUpdate/main/wallpaper.png'. Username - логин твоего акка, у меня Cvesti.
+
+
+Порядок действий
+1. Сделать Fork моего репозитория.
+2. Изменить переменную $url в DownloadWallpaper.ps1.
+3. Сохранить изменения через Commit changes.
+4. Загрузить свою картинку wallpaper.png.
+5. Скачать ZIP своего репозитория.
+6. Распаковать архив и запустить INSTALL.bat.
+
 ## Диагностика
 
 Файлы устанавливаются в `C:\PRJ_Notification`.
