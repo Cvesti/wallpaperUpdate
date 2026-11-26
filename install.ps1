@@ -52,29 +52,16 @@ foreach ($file in $files) {
 $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
 
-# Создание задач загрузки и регистрации
-foreach ($item in @(
-    @{Name='Download'; File='DownloadWallpaper.ps1'; Minutes=60}
-    @{Name='Provision'; File='ProvisionUsers.ps1'; Minutes=5}
-)) {
-    $script = Join-Path $root $item.File
-    $action = New-ScheduledTaskAction -Execute $ps -Argument ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}"' -f $script)
-    $repeat = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes($item.Minutes) -RepetitionInterval (New-TimeSpan -Minutes $item.Minutes) -RepetitionDuration (New-TimeSpan -Days 3650)
-    $triggers = @($repeat, (New-ScheduledTaskTrigger -AtStartup))
-    if ($item.Name -eq 'Provision') {
-        $logon = New-ScheduledTaskTrigger -AtLogOn
-        $logon.Delay = 'PT30S'
-        $triggers += $logon
-    }
-    Register-ScheduledTask -TaskPath '\' -TaskName "WLLPP_Wallpaper_$($item.Name)" -Action $action -Trigger $triggers -Principal $principal -Settings $settings -Force | Out-Null
-}
+# Создание часовой задачи
+$script = Join-Path $root 'DownloadWallpaper.ps1'
+$action = New-ScheduledTaskAction -Execute $ps -Argument ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}"' -f $script)
+$repeat = New-ScheduledTaskTrigger -Once -At (Get-Date).AddHours(1) -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
+$triggers = @($repeat, (New-ScheduledTaskTrigger -AtStartup))
+Register-ScheduledTask -TaskPath '\' -TaskName 'WLLPP_Wallpaper_Download' -Action $action -Trigger $triggers -Principal $principal -Settings $settings -Force | Out-Null
 
-# Регистрация пользователей и первая загрузка
-& $ps -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'ProvisionUsers.ps1')
-$result = $LASTEXITCODE
+# Первая загрузка
 Start-ScheduledTask -TaskPath '\' -TaskName 'WLLPP_Wallpaper_Download'
 
 Write-Host "Папка установки: $root"
 Write-Host 'Первоначальная загрузка запущена.'
-if ($result -ne 0) { exit 2 }
 exit 0

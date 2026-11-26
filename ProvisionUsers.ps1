@@ -32,19 +32,14 @@ foreach ($profile in $profiles) {
 
         $action = New-ScheduledTaskAction -Execute $ps -Argument ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f $script)
 
-        # Расписание применения
-        $repeat = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(5) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration (New-TimeSpan -Days 3650)
+        # Применение при входе пользователя
         $logon = New-ScheduledTaskTrigger -AtLogOn -User $user
         $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
         $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 3)
 
-        Register-ScheduledTask -TaskPath '\' -TaskName $name -Action $action -Trigger @($repeat, $logon) -Principal $principal -Settings $settings -Force | Out-Null
+        Register-ScheduledTask -TaskPath '\' -TaskName $name -Action $action -Trigger $logon -Principal $principal -Settings $settings -Force | Out-Null
         Log "Создана задача для пользователя: $user"
 
-        # Запуск для вошедшего пользователя
-        if ($profile.Loaded) {
-            Start-ScheduledTask -TaskPath '\' -TaskName $name
-        }
     } catch {
         $failed = $true
         Log "ОШИБКА регистрации $($sid): $($_.Exception.Message)"
